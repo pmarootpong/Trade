@@ -27,7 +27,7 @@
         .tab-content { display: none; }
         .tab-content.active { display: block; }
         input, select, textarea { background-color: #374151; border-color: #4b5563; color: #d1d5db; border-radius: 0.375rem; }
-        input:focus, select, textarea:focus { outline: 2px solid transparent; outline-offset: 2px; --tw-ring-color: #3b82f6; border-color: #3b82f6; }
+        input:focus, select:focus, textarea:focus { outline: 2px solid transparent; outline-offset: 2px; --tw-ring-color: #3b82f6; border-color: #3b82f6; }
         .table-auto th { background-color: #1f2937; }
         .table-auto tr:nth-child(even) { background-color: #1f2937; }
         .table-auto tr:nth-child(odd) { background-color: #374151; }
@@ -75,6 +75,25 @@
         </div>
 
         <main>
+            <!-- Dashboard Tab -->
+            <div id="dashboard" class="tab-content active space-y-6">
+                 <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                    <div class="bg-gray-800 p-4 rounded-lg shadow-lg"><h3 class="text-gray-400 text-sm font-medium">Total Portfolio Value</h3><p id="db-total-portfolio-value" class="text-2xl font-bold text-white">0.00 THB</p></div>
+                    <div class="bg-gray-800 p-4 rounded-lg shadow-lg"><h3 class="text-gray-400 text-sm font-medium">Available Cash</h3><p id="db-cash-balance" class="text-2xl font-bold text-white">0.00 THB</p></div>
+                    <div class="bg-gray-800 p-4 rounded-lg shadow-lg"><h3 class="text-gray-400 text-sm font-medium">Realized PnL</h3><p id="db-realized-pnl" class="text-2xl font-bold text-white">0.00 THB</p></div>
+                    <div class="bg-gray-800 p-4 rounded-lg shadow-lg"><h3 class="text-gray-400 text-sm font-medium">Win Rate</h3><p id="db-win-rate" class="text-2xl font-bold text-white">N/A</p></div>
+                    <div class="bg-gray-800 p-4 rounded-lg shadow-lg"><h3 class="text-gray-400 text-sm font-medium">Average R Multiple</h3><p id="db-avg-r" class="text-2xl font-bold text-white">N/A</p></div>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-gray-800 p-4 rounded-lg shadow-lg"><h2 class="text-xl font-bold text-white mb-4">Portfolio Equity Curve</h2><canvas id="equity-chart"></canvas></div>
+                    <div class="bg-gray-800 p-4 rounded-lg shadow-lg"><h2 class="text-xl font-bold text-white mb-4">Crypto Allocation</h2><p class="text-sm text-gray-400 -mt-4 mb-2">Total Crypto Value: <span id="db-crypto-value" class="font-semibold">0.00 THB</span></p><canvas id="holdings-chart"></canvas></div>
+                </div>
+                <div class="bg-gray-800 p-4 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-bold text-white mb-4">Trade Insights (Open Positions)</h2>
+                    <div class="overflow-x-auto"><table class="w-full text-left table-auto"><thead><tr><th class="p-2">Symbol</th><th class="p-2">Side</th><th class="p-2">Entry</th><th class="p-2">Current Price</th><th class="p-2">Diff to TP1 (%)</th><th class="p-2">Diff to TP2 (%)</th></tr></thead><tbody id="insight-table-body"></tbody></table></div>
+                </div>
+            </div>
+
             <!-- Planner Tab -->
             <div id="planner" class="tab-content space-y-6">
                 <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
@@ -101,6 +120,57 @@
                 </div>
             </div>
 
+            <!-- TradesLog Tab -->
+            <div id="tradesLog" class="tab-content space-y-6">
+                 <div class="bg-gray-800 p-4 rounded-lg shadow-lg">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold text-white">Trades Log</h2>
+                    </div>
+                    <div class="overflow-x-auto"><table class="w-full text-left table-auto text-sm"><thead><tr><th>Date</th><th>Symbol</th><th>Side</th><th>Entry</th><th>Stop(Eff)</th><th>TP1(Eff)</th><th>Qty</th><th>Risk(THB)</th><th>R:R(TP1)</th><th>Status</th><th>Exit Price</th><th>Actual PnL</th><th>R Multiple</th><th>Actions</th></tr></thead><tbody id="trades-log-body"></tbody></table></div>
+                </div>
+            </div>
+
+            <!-- CostBasis Tab -->
+            <div id="costBasis" class="tab-content space-y-6">
+                 <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+                     <h2 class="text-xl font-bold text-white mb-4">เพิ่มธุรกรรม (Add Transaction)</h2>
+                     <form id="add-cost-basis-form" class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+                        <div><label class="block mb-1 text-sm">Date</label><input type="date" id="cb-date" class="w-full p-2" required></div>
+                        <div><label class="block mb-1 text-sm">Symbol</label><input type="text" id="cb-symbol" placeholder="e.g., ETH" class="w-full p-2 uppercase" required></div>
+                        <div><label class="block mb-1 text-sm">Action</label><select id="cb-action" class="w-full p-2"><option value="BUY">BUY</option><option value="SELL">SELL</option></select></div>
+                        <div><label class="block mb-1 text-sm">Price</label><input type="number" step="any" id="cb-price" class="w-full p-2" required></div>
+                        <div><label class="block mb-1 text-sm">Amount (THB)</label><input type="number" step="any" id="cb-amount" class="w-full p-2" required></div>
+                        <div class="md:col-span-5"><button type="submit" class="w-full btn-primary p-2 rounded font-semibold">Add Transaction</button></div>
+                    </form>
+                </div>
+                <div class="bg-gray-800 p-4 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-bold text-white mb-4">Cost Basis Log</h2>
+                    <div class="overflow-x-auto"><table class="w-full text-left table-auto text-sm"><thead><tr><th>Date</th><th>Symbol</th><th>Action</th><th>Price</th><th>Amount(THB)</th><th>Qty</th><th>Cum Qty</th><th>Cum Cost(THB)</th><th>Avg Cost</th><th>Action</th></tr></thead><tbody id="cost-basis-body"></tbody></table></div>
+                </div>
+            </div>
+
+            <!-- Cash Management Tab -->
+            <div id="cash" class="tab-content space-y-6">
+                <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-bold text-white mb-4">บันทึกเงินสด (Cash Transaction)</h2>
+                    <form id="add-cash-form" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                        <div class="col-span-1"><label for="cash-date" class="block mb-1 text-sm">Date</label><input type="date" id="cash-date" class="w-full p-2" required></div>
+                        <div class="col-span-1"><label for="cash-type" class="block mb-1 text-sm">Type</label><select id="cash-type" class="w-full p-2" required><option value="DEPOSIT">ฝาก (Deposit)</option><option value="WITHDRAWAL">ถอน (Withdrawal)</option></select></div>
+                        <div class="col-span-1"><label for="cash-amount" class="block mb-1 text-sm">Amount (THB)</label><input type="number" step="any" id="cash-amount" placeholder="e.g., 50000" class="w-full p-2" required></div>
+                        <div class="col-span-1"><button type="submit" class="w-full btn-primary p-2 rounded font-semibold">Add Transaction</button></div>
+                    </form>
+                </div>
+                <div class="bg-gray-800 p-4 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-bold text-white mb-4">ประวัติธุรกรรมเงินสด</h2>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left table-auto text-sm">
+                            <thead><tr><th class="p-2">Date</th><th class="p-2">Type</th><th class="p-2">Amount (THB)</th><th class="p-2">Action</th></tr></thead>
+                            <tbody id="cash-log-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
              <!-- Settings Tab -->
             <div id="settings" class="tab-content">
                 <div class="bg-gray-800 p-6 rounded-lg shadow-lg max-w-md mx-auto">
@@ -122,19 +192,12 @@
                     </form>
                 </div>
             </div>
-
-            <!-- Other Tabs (Dashboard, Logs, etc. remain here but are omitted for brevity in this view) -->
-            <div id="dashboard" class="tab-content active space-y-6"></div>
-            <div id="tradesLog" class="tab-content space-y-6"></div>
-            <div id="costBasis" class="tab-content space-y-6"></div>
-            <div id="cash" class="tab-content space-y-6"></div>
-
         </main>
     </div>
 
     <!-- Modal for Closing Trade -->
-    <div id="close-trade-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center hidden z-50">
-         <!-- Modal content is unchanged -->
+    <div id="close-trade-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center hidden z-50 p-4">
+        <div class="bg-gray-800 p-6 rounded-lg shadow-lg w-full max-w-sm"><h2 class="text-xl font-bold text-white mb-4">Close Trade</h2><form id="close-trade-form"><input type="hidden" id="close-trade-id"><div><label class="block mb-1">Exit Price</label><input type="number" step="any" id="exit-price" class="w-full p-2 rounded mb-4" required></div><div><label class="block mb-1">Exit Date</label><input type="date" id="exit-date" class="w-full p-2 rounded mb-4" required></div><div class="flex justify-end gap-4"><button type="button" onclick="closeModal()" class="btn-secondary px-4 py-2 rounded">Cancel</button><button type="submit" class="btn-primary px-4 py-2 rounded">Confirm Close</button></div></form></div>
     </div>
 
     <!-- NEW: Pre-trade Checklist Modal -->
@@ -149,7 +212,7 @@
                     <div>
                         <h3 class="font-semibold text-white mb-2">1) Trend Direction</h3>
                         <div class="pl-4 space-y-2">
-                           <label class="checklist-item"><input type="checkbox" class="checklist-box"> ราคาอยู่เหนือ/ต่ำกว่า EMA20 & EMA50</label>
+                           <label class="checklist-item"><input type="checkbox" class="checklist-box" required> ราคาอยู่เหนือ/ต่ำกว่า EMA20 & EMA50</label>
                            <label class="checklist-item"><input type="checkbox" class="checklist-box"> EMA20/EMA50 Cross (Golden/Death)</label>
                         </div>
                     </div>
@@ -157,7 +220,7 @@
                     <div>
                         <h3 class="font-semibold text-white mb-2">2) Momentum Confirmation</h3>
                         <div class="pl-4 space-y-2">
-                           <label class="checklist-item"><input type="checkbox" class="checklist-box"> RSI(14) > 50 (Buy) or < 50 (Sell)</label>
+                           <label class="checklist-item"><input type="checkbox" class="checklist-box" required> RSI(14) > 50 (Buy) or < 50 (Sell)</label>
                            <label class="checklist-item"><input type="checkbox" class="checklist-box"> ไม่มีสัญญาณ Overbought/Oversold</label>
                         </div>
                     </div>
@@ -185,7 +248,7 @@
                     <div>
                         <h3 class="font-semibold text-white mb-2">5) Execution Rules</h3>
                         <div class="pl-4 space-y-2">
-                           <label class="checklist-item"><input type="checkbox" class="checklist-box"> ยืนยันการแบ่งไม้ตามแผน</label>
+                           <label class="checklist-item"><input type="checkbox" class="checklist-box" required> ยืนยันการแบ่งไม้ตามแผน</label>
                            <label class="checklist-item"><input type="checkbox" class="checklist-box"> วางแผนจัดการ Trade หลังแตะ TP1</label>
                         </div>
                     </div>
@@ -222,7 +285,7 @@
 
         let currentUser = null;
         let userDataUnsubscribe = null;
-        let priceUpdateInterval = null; // For auto-updating prices
+        let priceUpdateInterval = null;
         
         let settings = {};
         let costBasisLog = [];
@@ -236,31 +299,96 @@
 
         const loginContainer = document.getElementById('login-container');
         const mainAppContainer = document.getElementById('main-app-container');
+        const userEmailEl = document.getElementById('user-email');
         
         // --- AUTH & DATA MANAGEMENT ---
+        document.getElementById('login-btn').addEventListener('click', () => signInWithPopup(auth, provider).catch(err => console.error("Login failed:", err.message)));
+        document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
+        
         onAuthStateChanged(auth, user => {
             if (user) {
                 currentUser = user;
-                // ... login logic ...
+                loginContainer.classList.add('hidden');
+                mainAppContainer.classList.remove('hidden');
+                userEmailEl.textContent = `Logged in as: ${user.email}`;
+                loadDataForUser(user.uid);
                 if (priceUpdateInterval) clearInterval(priceUpdateInterval);
-                priceUpdateInterval = setInterval(() => fetchRealTimePrices().then(() => renderAll()), 30000); // Auto-refresh every 30s
+                priceUpdateInterval = setInterval(() => fetchRealTimePrices().then(() => renderAll()), 30000);
             } else {
                 currentUser = null;
-                // ... logout logic ...
+                if (userDataUnsubscribe) userDataUnsubscribe();
                 if (priceUpdateInterval) clearInterval(priceUpdateInterval);
+                loginContainer.classList.remove('hidden');
+                mainAppContainer.classList.add('hidden');
+                settings = {}; costBasisLog = []; tradesLog = []; tradePlans = []; cashLog = [];
+                renderAll();
             }
         });
 
-        async function saveData() { /* ... unchanged ... */ }
-        function loadDataForUser(uid) { /* ... unchanged ... */ }
+        async function saveData() {
+            if (!currentUser) return;
+            try {
+                const userDocRef = doc(db, "users", currentUser.uid);
+                await setDoc(userDocRef, { settings, costBasisLog, tradesLog, tradePlans, cashLog });
+            } catch (error) {
+                console.error("Error saving data:", error);
+            }
+        }
+
+        function loadDataForUser(uid) {
+            const userDocRef = doc(db, "users", uid);
+            userDataUnsubscribe = onSnapshot(userDocRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    settings = data.settings || { ...defaultSettings };
+                    costBasisLog = data.costBasisLog || [];
+                    tradesLog = data.tradesLog || [];
+                    tradePlans = data.tradePlans || [];
+                    cashLog = data.cashLog || [];
+                } else {
+                    settings = { ...defaultSettings };
+                    costBasisLog = []; tradesLog = []; tradePlans = []; cashLog = [];
+                    saveData();
+                }
+                loadSettingsToUI();
+                fetchRealTimePrices().then(() => renderAll());
+            }, (error) => {
+                console.error("Error loading data:", error);
+            });
+        }
         
         // --- RENDER FUNCTIONS ---
-        function renderAll() { /* ... unchanged ... */ }
+        function renderAll() {
+            if (!currentUser) {
+                document.getElementById('cost-basis-body').innerHTML = '';
+                document.getElementById('trades-log-body').innerHTML = '';
+                document.getElementById('insight-table-body').innerHTML = '';
+                document.getElementById('active-plans-container').innerHTML = '';
+                document.getElementById('cash-log-body').innerHTML = '';
+                if(window.equityChart) window.equityChart.destroy();
+                if(window.holdingsChart) window.holdingsChart.destroy();
+                return;
+            }
+            const portfolioStats = calculatePortfolioStats();
+            renderDashboard(portfolioStats);
+            renderTradePlanner();
+            renderTradesLog();
+            renderCostBasisLog();
+            renderCashLog();
+            renderCharts(portfolioStats);
+        }
         
         // --- API & UTILITIES ---
         async function fetchRealTimePrices() {
             try {
-                // ... fetch logic from bitkub ...
+                const response = await fetch('https://api.bitkub.com/api/market/ticker');
+                if (!response.ok) throw new Error('BitKub API response was not ok');
+                const tickers = await response.json();
+                if (tickers['THB_ETH']) settings.currentPriceEth = parseFloat(tickers['THB_ETH'].last);
+                if (tickers['THB_HBAR']) settings.currentPriceHbar = parseFloat(tickers['THB_HBAR'].last);
+                
+                document.getElementById('current-price-eth').value = settings.currentPriceEth || 0;
+                document.getElementById('current-price-hbar').value = settings.currentPriceHbar || 0;
                 document.getElementById('last-updated-time').textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
             } catch (error) {
                 console.error("Failed to fetch BitKub prices:", error);
@@ -268,28 +396,152 @@
         }
         
         // --- PORTFOLIO CALCULATION ---
-        function calculatePortfolioStats() { /* ... unchanged ... */ }
+        function calculatePortfolioStats() {
+            const totalDeposits = cashLog.reduce((sum, t) => sum + (t.type === 'DEPOSIT' ? t.amount : 0), 0);
+            const totalWithdrawals = cashLog.reduce((sum, t) => sum + (t.type === 'WITHDRAWAL' ? t.amount : 0), 0);
+            const totalBuys = costBasisLog.reduce((sum, t) => sum + (t.action === 'BUY' ? t.amount : 0), 0);
+            const totalSells = costBasisLog.reduce((sum, t) => sum + (t.action === 'SELL' ? t.amount : 0), 0);
+            const availableCash = totalDeposits - totalWithdrawals - totalBuys + totalSells;
+
+            const holdings = {};
+            [...costBasisLog].sort((a,b) => new Date(a.date) - new Date(b.date)).forEach(tx => {
+                if(!holdings[tx.symbol]) holdings[tx.symbol] = { cumQty: 0, cumCost: 0 };
+                const qty = tx.amount / tx.price;
+                if (tx.action === 'BUY') {
+                    const feeAdjustedQty = qty * (1 - (settings.feePercent/100));
+                    holdings[tx.symbol].cumQty += feeAdjustedQty;
+                    holdings[tx.symbol].cumCost += tx.amount;
+                } else {
+                    const avgCost = holdings[tx.symbol].cumQty > 0 ? holdings[tx.symbol].cumCost / holdings[tx.symbol].cumQty : 0;
+                    holdings[tx.symbol].cumQty -= qty;
+                    holdings[tx.symbol].cumCost -= qty * avgCost;
+                }
+                if (holdings[tx.symbol].cumQty < 1e-9) holdings[tx.symbol].cumQty = 0;
+                if (holdings[tx.symbol].cumCost < 0) holdings[tx.symbol].cumCost = 0;
+            });
+            
+            const totalCryptoValue = Object.keys(holdings).reduce((sum, symbol) => {
+                const currentPrice = symbol.toUpperCase() === 'ETH' ? settings.currentPriceEth : (symbol.toUpperCase() === 'HBAR' ? settings.currentPriceHbar : 0);
+                return sum + (holdings[symbol].cumQty * (currentPrice || 0));
+            }, 0);
+
+            const totalPortfolioValue = totalCryptoValue + availableCash;
+            const realizedPnL = tradesLog.filter(t => t.status === 'CLOSED').reduce((sum, t) => sum + (t.actualPnl || 0), 0);
+
+            return { availableCash, totalCryptoValue, totalPortfolioValue, realizedPnL, holdings };
+        }
 
         // --- DASHBOARD & CHARTS ---
-        function renderDashboard(stats) { /* ... unchanged ... */ }
-        function renderCharts(stats) { /* ... unchanged ... */ }
+        function renderDashboard(stats) {
+            document.getElementById('db-total-portfolio-value').innerText = `${stats.totalPortfolioValue.toFixed(2)} THB`;
+            document.getElementById('db-cash-balance').innerText = `${stats.availableCash.toFixed(2)} THB`;
+            document.getElementById('db-realized-pnl').innerText = `${stats.realizedPnL.toFixed(2)} THB`;
+            document.getElementById('db-crypto-value').innerText = `${stats.totalCryptoValue.toFixed(2)} THB`;
+            
+            const closedTrades = tradesLog.filter(t => t.status === 'CLOSED');
+            const wins = closedTrades.filter(t => t.actualPnl > 0).length;
+            document.getElementById('db-win-rate').innerText = closedTrades.length > 0 ? `${(wins / closedTrades.length * 100).toFixed(2)}%` : 'N/A';
+            const totalR = closedTrades.reduce((sum, t) => sum + (t.rMultiple || 0), 0);
+            document.getElementById('db-avg-r').innerText = closedTrades.length > 0 ? (totalR / closedTrades.length).toFixed(2) : 'N/A';
+
+            const openTrades = tradesLog.filter(t => t.status === 'OPEN');
+            const insightBody = document.getElementById('insight-table-body');
+            insightBody.innerHTML = '';
+            openTrades.forEach(trade => {
+                const currentPrice = trade.symbol.toUpperCase() === 'ETH' ? settings.currentPriceEth : settings.currentPriceHbar;
+                const diff1 = currentPrice > 0 ? ((trade.tp1Eff - currentPrice) / currentPrice) * 100 * (trade.side === 'LONG' ? 1 : -1) : 0;
+                const diff2 = currentPrice > 0 ? ((trade.tp2Eff - currentPrice) / currentPrice) * 100 * (trade.side === 'LONG' ? 1 : -1) : 0;
+                insightBody.innerHTML += `<tr><td class="p-2 font-semibold">${trade.symbol}</td><td class="p-2 ${trade.side.toLowerCase()}">${trade.side}</td><td class="p-2">${trade.entryPrice.toFixed(4)}</td><td class="p-2">${currentPrice.toFixed(4)}</td><td class="p-2">${diff1.toFixed(2)}%</td><td class="p-2">${diff2.toFixed(2)}%</td></tr>`;
+            });
+        }
+        
+        function renderCharts(stats) {
+            const timelineEvents = [
+                ...cashLog.map(t => ({ date: t.date, amount: t.type === 'DEPOSIT' ? t.amount : -t.amount })),
+                ...tradesLog.filter(t => t.status === 'CLOSED' && t.exitDate).map(t => ({ date: t.exitDate, amount: t.actualPnl }))
+            ].sort((a, b) => new Date(a.date) - new Date(b.date));
+            
+            let cumulativeValue = 0;
+            const equityData = timelineEvents.map(event => {
+                cumulativeValue += event.amount;
+                return { x: new Date(event.date), y: cumulativeValue };
+            });
+
+            const ctxEquity = document.getElementById('equity-chart').getContext('2d');
+            if(window.equityChart) window.equityChart.destroy();
+            window.equityChart = new Chart(ctxEquity, {
+                type: 'line',
+                data: { datasets: [{ label: 'Portfolio Equity (THB)', data: equityData, borderColor: '#3b82f6', tension: 0.1 }] },
+                options: { scales: { x: { type: 'time', time: { unit: 'day' }, adapters: { date: { locale: 'en-US' } } } } }
+            });
+
+            const cryptoValues = Object.keys(stats.holdings).map(symbol => {
+                const currentPrice = symbol.toUpperCase() === 'ETH' ? settings.currentPriceEth : (symbol.toUpperCase() === 'HBAR' ? settings.currentPriceHbar : 0);
+                return stats.holdings[symbol].cumQty * currentPrice;
+            });
+            const ctxHoldings = document.getElementById('holdings-chart').getContext('2d');
+            if(window.holdingsChart) window.holdingsChart.destroy();
+            window.holdingsChart = new Chart(ctxHoldings, {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(stats.holdings),
+                    datasets: [{ label: 'Crypto Value (THB)', data: cryptoValues, backgroundColor: ['#3b82f6', '#ef4444', '#22c55e', '#f97316', '#a855f7'] }]
+                }
+            });
+        }
         
         // --- CASH MANAGEMENT ---
-        function renderCashLog() { /* ... unchanged ... */ }
-
-        // --- TRADE PLANNER (UPDATED) ---
-        document.getElementById('trade-plan-form').addEventListener('submit', async function(e) {
+        function renderCashLog() {
+            const body = document.getElementById('cash-log-body');
+            body.innerHTML = '';
+            [...cashLog].sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(tx => {
+                body.innerHTML += `<tr><td class="p-2">${tx.date}</td><td class="p-2 ${tx.type.toLowerCase()}">${tx.type}</td><td class="p-2">${tx.amount.toFixed(2)}</td><td class="p-2"><button class="text-red-500 hover:text-red-400 text-xs" onclick="deleteCashItem('${tx.id}')">Delete</button></td></tr>`;
+            });
+        }
+        document.getElementById('add-cash-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const newPlan = {
-                // ... create plan object ...
-                riskPercent: parseFloat(document.getElementById('plan-risk-percent').value), // Add risk %
-                // ...
+            const newTx = {
+                id: `cash_${new Date().getTime()}`,
+                date: document.getElementById('cash-date').value,
+                type: document.getElementById('cash-type').value,
+                amount: parseFloat(document.getElementById('cash-amount').value)
             };
-            tradePlans.push(newPlan);
+            cashLog.push(newTx);
             await saveData();
             e.target.reset();
         });
+        window.deleteCashItem = async (id) => {
+            if (confirm('Are you sure you want to delete this cash transaction?')) {
+                cashLog = cashLog.filter(tx => tx.id !== id);
+                await saveData();
+            }
+        };
 
+        // --- TRADE PLANNER ---
+        function addPlanEntryField() {
+            const container = document.getElementById('plan-entries-container');
+            const entryDiv = document.createElement('div');
+            entryDiv.className = 'grid grid-cols-1 md:grid-cols-4 gap-3 p-3 bg-gray-700 rounded-lg';
+            entryDiv.innerHTML = `<input type="number" step="any" placeholder="Entry Price" class="plan-entry-price p-2" required><input type="number" step="any" placeholder="Stop Price" class="plan-entry-stop p-2" required><input type="number" step="1" min="1" max="100" placeholder="% of Size (e.g., 30)" class="plan-entry-percent p-2" required><button type="button" class="btn-danger p-2 text-sm" onclick="this.parentElement.remove()">Remove</button>`;
+            container.appendChild(entryDiv);
+        }
+        document.getElementById('add-plan-entry-btn').addEventListener('click', addPlanEntryField);
+        document.getElementById('trade-plan-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const entries = Array.from(document.querySelectorAll('#plan-entries-container > div')).map(el => ({
+                entryPrice: parseFloat(el.querySelector('.plan-entry-price').value),
+                stopPrice: parseFloat(el.querySelector('.plan-entry-stop').value),
+                percent: parseFloat(el.querySelector('.plan-entry-percent').value),
+                status: 'PLANNED'
+            }));
+            if(entries.reduce((sum, en) => sum + en.percent, 0) > 100) { return alert('Total percentage cannot exceed 100%.'); }
+            const newPlan = { id: `plan_${new Date().getTime()}`, symbol: document.getElementById('plan-symbol').value.toUpperCase(), timeframe: document.getElementById('plan-timeframe').value, strategy: document.getElementById('plan-strategy').value, riskPercent: parseFloat(document.getElementById('plan-risk-percent').value), notes: document.getElementById('plan-notes').value, status: 'ACTIVE', entries };
+            tradePlans.push(newPlan);
+            await saveData();
+            e.target.reset();
+            document.getElementById('plan-entries-container').innerHTML = '';
+            addPlanEntryField();
+        });
         function renderTradePlanner() {
             const container = document.getElementById('active-plans-container');
             container.innerHTML = '';
@@ -297,33 +549,97 @@
                 const planDiv = document.createElement('div');
                 planDiv.className = 'bg-gray-700 p-4 rounded-lg';
                  let entriesHtml = plan.entries.map((entry, index) => {
-                    return `<div class="grid grid-cols-5 gap-2 items-center text-sm p-2 ${index % 2 === 0 ? 'bg-gray-800' : 'bg-gray-600'} rounded">
-                                <span>Entry ${index + 1} (${entry.percent}%)</span>
-                                <span><strong>Entry:</strong> ${entry.entryPrice.toFixed(4)}</span>
-                                <span><strong>Stop:</strong> ${entry.stopPrice.toFixed(4)}</span>
-                                <span class="text-gray-400">Risk: ${plan.riskPercent}%</span>
-                                ${entry.status === 'PLANNED' ? `<button class="btn-success text-xs p-1 rounded" onclick="openChecklistModal('${plan.id}', ${index})">Execute</button>` : `<span class="text-gray-400">Executed</span>`}
-                            </div>`;
+                    return `<div class="grid grid-cols-5 gap-2 items-center text-sm p-2 ${index % 2 === 0 ? 'bg-gray-800' : 'bg-gray-600'} rounded"><span>Entry ${index + 1} (${entry.percent}%)</span><span><strong>Entry:</strong> ${entry.entryPrice.toFixed(4)}</span><span><strong>Stop:</strong> ${entry.stopPrice.toFixed(4)}</span><span class="text-gray-400">Risk: ${plan.riskPercent}%</span>${entry.status === 'PLANNED' ? `<button class="btn-success text-xs p-1 rounded" onclick="openChecklistModal('${plan.id}', ${index})">Execute</button>` : `<span class="text-gray-400">Executed</span>`}</div>`;
                 }).join('');
-
-                planDiv.innerHTML = `
-                    <div class="flex justify-between items-center mb-2">
-                        <h3 class="text-lg font-bold">${plan.symbol} - <span class="text-base font-normal">${plan.strategy} (${plan.timeframe})</span></h3>
-                        <button class="btn-danger text-xs p-1 rounded" onclick="archivePlan('${plan.id}')">Archive</button>
-                    </div>
-                    <p class="text-sm text-gray-300 mb-3">${plan.notes}</p>
-                    <div class="space-y-1">${entriesHtml}</div>
-                `;
+                planDiv.innerHTML = `<div class="flex justify-between items-center mb-2"><h3 class="text-lg font-bold">${plan.symbol} - <span class="text-base font-normal">${plan.strategy} (${plan.timeframe})</span></h3><button class="btn-danger text-xs p-1 rounded" onclick="archivePlan('${plan.id}')">Archive</button></div><p class="text-sm text-gray-300 mb-3">${plan.notes}</p><div class="space-y-1">${entriesHtml}</div>`;
                 container.appendChild(planDiv);
             });
         }
+        window.archivePlan = async (planId) => {
+            const plan = tradePlans.find(p => p.id === planId);
+            if (plan && confirm(`Are you sure you want to archive the plan for ${plan.symbol}?`)) {
+                plan.status = 'ARCHIVED';
+                await saveData();
+            }
+        };
+
+        // --- TRADES & COST BASIS LOG ---
+        document.getElementById('add-cost-basis-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const newTx = { id: `cb_${new Date().getTime()}`, date: document.getElementById('cb-date').value, symbol: document.getElementById('cb-symbol').value.toUpperCase(), action: document.getElementById('cb-action').value, price: parseFloat(document.getElementById('cb-price').value), amount: parseFloat(document.getElementById('cb-amount').value) };
+            costBasisLog.push(newTx);
+            await saveData();
+            e.target.reset();
+        });
+        function renderTradesLog() {
+            const body = document.getElementById('trades-log-body');
+            body.innerHTML = '';
+            [...tradesLog].sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(t => {
+                body.innerHTML += `<tr><td class="p-2">${t.date}</td><td class="p-2">${t.symbol}</td><td class="p-2 ${t.side.toLowerCase()}">${t.side}</td><td class="p-2">${t.entryPrice.toFixed(4)}</td><td class="p-2">${t.stopEff.toFixed(4)}</td><td class="p-2">${t.tp1Eff.toFixed(4)}</td><td class="p-2">${t.qty.toFixed(6)}</td><td class="p-2">${(t.riskThb || 0).toFixed(2)}</td><td class="p-2">${(t.rr1 || 0).toFixed(2)}</td><td class="p-2">${t.status}</td><td class="p-2">${t.exitPrice ? t.exitPrice.toFixed(4) : 'N/A'}</td><td class="p-2 ${t.actualPnl > 0 ? 'buy' : t.actualPnl < 0 ? 'sell' : ''}">${t.actualPnl ? t.actualPnl.toFixed(2) : 'N/A'}</td><td class="p-2">${t.rMultiple ? t.rMultiple.toFixed(2) : 'N/A'}</td><td class="p-2">${t.status === 'OPEN' ? `<button class="btn-primary text-xs p-1 rounded" onclick="openModal('${t.id}')">Close</button>`: ''}</td></tr>`;
+            });
+        }
+        function renderCostBasisLog() {
+            const body = document.getElementById('cost-basis-body');
+            body.innerHTML = '';
+            let holdings = {};
+            [...costBasisLog].sort((a,b) => new Date(a.date) - new Date(b.date)).forEach(tx => {
+                if(!holdings[tx.symbol]) holdings[tx.symbol] = { cumQty: 0, cumCost: 0 };
+                const qty = tx.amount / tx.price;
+                if (tx.action === 'BUY') {
+                    const feeAdjustedQty = qty * (1 - (settings.feePercent/100));
+                    holdings[tx.symbol].cumQty += feeAdjustedQty;
+                    holdings[tx.symbol].cumCost += tx.amount;
+                } else {
+                    const avgCost = holdings[tx.symbol].cumQty > 0 ? holdings[tx.symbol].cumCost / holdings[tx.symbol].cumQty : 0;
+                    holdings[tx.symbol].cumQty -= qty;
+                    holdings[tx.symbol].cumCost -= qty * avgCost;
+                }
+                tx.calc = { qty, cumQty: holdings[tx.symbol].cumQty, cumCost: holdings[tx.symbol].cumCost, avgCost: holdings[tx.symbol].cumQty > 0 ? holdings[tx.symbol].cumCost / holdings[tx.symbol].cumQty : 0 };
+            });
+            [...costBasisLog].sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(tx => {
+                body.innerHTML += `<tr><td class="p-2">${tx.date}</td><td class="p-2">${tx.symbol}</td><td class="p-2 ${tx.action.toLowerCase()}">${tx.action}</td><td class="p-2">${tx.price.toFixed(4)}</td><td class="p-2">${tx.amount.toFixed(2)}</td><td class="p-2">${tx.calc.qty.toFixed(6)}</td><td class="p-2">${tx.calc.cumQty.toFixed(6)}</td><td class="p-2">${tx.calc.cumCost.toFixed(2)}</td><td class="p-2">${tx.calc.avgCost.toFixed(4)}</td><td class="p-2"><button class="text-red-500 hover:text-red-400 text-xs" onclick="deleteCostItem('${tx.id}')">Delete</button></td></tr>`;
+            });
+        }
+        window.deleteCostItem = async (id) => {
+             if (confirm('Are you sure you want to delete this transaction?')) {
+                costBasisLog = costBasisLog.filter(tx => tx.id !== id);
+                await saveData();
+            }
+        };
+
+        // --- MODALS ---
+        window.openModal = (tradeId) => {
+            document.getElementById('close-trade-id').value = tradeId;
+            document.getElementById('close-trade-modal').classList.remove('hidden');
+            document.getElementById('exit-date').value = new Date().toISOString().split('T')[0];
+        };
+        window.closeModal = () => {
+            document.getElementById('close-trade-modal').classList.add('hidden');
+            document.getElementById('close-trade-form').reset();
+        };
+        document.getElementById('close-trade-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const tradeId = document.getElementById('close-trade-id').value;
+            const exitPrice = parseFloat(document.getElementById('exit-price').value);
+            const trade = tradesLog.find(t => t.id === tradeId);
+            if (!trade) return;
+            const pnlPerUnit = exitPrice - trade.entryPrice;
+            const finalPnl = (trade.side === 'LONG' ? pnlPerUnit : -pnlPerUnit) * trade.qty;
+            const fee = (trade.positionSize + (exitPrice * trade.qty)) * (settings.feePercent / 100);
+            trade.status = 'CLOSED';
+            trade.exitPrice = exitPrice;
+            trade.exitDate = document.getElementById('exit-date').value;
+            trade.actualPnl = finalPnl - fee;
+            trade.rMultiple = trade.riskThb > 0 ? trade.actualPnl / trade.riskThb : 0;
+            await saveData();
+            closeModal();
+        });
         
-        // --- CHECKLIST MODAL (NEW LOGIC) ---
+        // --- CHECKLIST MODAL ---
         window.openChecklistModal = (planId, entryIndex) => {
             const plan = tradePlans.find(p => p.id === planId);
             const entry = plan.entries[entryIndex];
             if (!plan || !entry) return;
-
             const portfolioStats = calculatePortfolioStats();
             const riskThb = portfolioStats.totalPortfolioValue * (plan.riskPercent / 100);
             const stopDist = Math.abs(entry.entryPrice - entry.stopPrice);
@@ -331,8 +647,6 @@
             const qty = fullQty * (entry.percent / 100);
             const side = entry.entryPrice > entry.stopPrice ? 'LONG' : 'SHORT';
             const tp1 = side === 'LONG' ? entry.entryPrice + (stopDist * settings.targetR1) : entry.entryPrice - (stopDist * settings.targetR1);
-
-            // Populate modal
             document.getElementById('checklist-plan-id').value = planId;
             document.getElementById('checklist-entry-index').value = entryIndex;
             document.getElementById('checklist-risk-percent').textContent = `${plan.riskPercent}%`;
@@ -341,66 +655,65 @@
             document.getElementById('checklist-size').textContent = `${(qty * entry.entryPrice).toFixed(2)} THB`;
             document.getElementById('checklist-stop').textContent = entry.stopPrice.toFixed(4);
             document.getElementById('checklist-tp1').textContent = tp1.toFixed(4);
-            
-            // Reset checklist and show modal
             document.getElementById('checklist-form').reset();
             document.getElementById('checklist-confirm-btn').disabled = true;
             document.getElementById('checklist-modal').classList.remove('hidden');
         };
-
-        window.closeChecklistModal = () => {
-            document.getElementById('checklist-modal').classList.add('hidden');
-        };
-
-        // Event listener for checklist boxes
+        window.closeChecklistModal = () => document.getElementById('checklist-modal').classList.add('hidden');
         document.querySelectorAll('.checklist-box').forEach(box => {
             box.addEventListener('change', () => {
-                const allChecked = Array.from(document.querySelectorAll('.checklist-box')).every(b => b.checked);
-                document.getElementById('checklist-confirm-btn').disabled = !allChecked;
+                const requiredChecked = Array.from(document.querySelectorAll('.checklist-box[required]')).every(b => b.checked);
+                document.getElementById('checklist-confirm-btn').disabled = !requiredChecked;
             });
         });
-
-        // Handle the actual trade execution from the checklist modal
         document.getElementById('checklist-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const planId = document.getElementById('checklist-plan-id').value;
             const entryIndex = parseInt(document.getElementById('checklist-entry-index').value, 10);
-            
-            // Re-find plan and entry to execute
             const plan = tradePlans.find(p => p.id === planId);
             if (!plan) return;
             const entry = plan.entries[entryIndex];
-
-            // Re-calculate trade params to ensure consistency
             const portfolioStats = calculatePortfolioStats();
             const riskThb = portfolioStats.totalPortfolioValue * (plan.riskPercent / 100);
             const stopDist = Math.abs(entry.entryPrice - entry.stopPrice);
             const fullQty = stopDist > 0 ? riskThb / stopDist : 0;
             const qty = fullQty * (entry.percent / 100);
             const side = entry.entryPrice > entry.stopPrice ? 'LONG' : 'SHORT';
-
-            const newTrade = {
-                id: `trd_${new Date().getTime()}`, date: new Date().toISOString().split('T')[0], symbol: plan.symbol, side, 
-                entryPrice: entry.entryPrice, positionSize: qty * entry.entryPrice, stopEff: entry.stopPrice,
-                tp1Eff: side === 'LONG' ? entry.entryPrice + (stopDist * settings.targetR1) : entry.entryPrice - (stopDist * settings.targetR1),
-                tp2Eff: side === 'LONG' ? entry.entryPrice + (stopDist * settings.targetR2) : entry.entryPrice - (stopDist * settings.targetR2),
-                qty, riskThb, rr1: settings.targetR1, status: 'OPEN',
-                exitPrice: null, exitDate: null, actualPnl: null, rMultiple: null
-            };
-            
+            const newTrade = { id: `trd_${new Date().getTime()}`, date: new Date().toISOString().split('T')[0], symbol: plan.symbol, side, entryPrice: entry.entryPrice, positionSize: qty * entry.entryPrice, stopEff: entry.stopPrice, tp1Eff: side === 'LONG' ? entry.entryPrice + (stopDist * settings.targetR1) : entry.entryPrice - (stopDist * settings.targetR1), tp2Eff: side === 'LONG' ? entry.entryPrice + (stopDist * settings.targetR2) : entry.entryPrice - (stopDist * settings.targetR2), qty, riskThb, rr1: settings.targetR1, status: 'OPEN', exitPrice: null, exitDate: null, actualPnl: null, rMultiple: null };
             tradesLog.push(newTrade);
             plan.entries[entryIndex].status = 'EXECUTED';
-            if (plan.entries.every(e => e.status === 'EXECUTED')) {
-                plan.status = 'ARCHIVED';
-            }
-            
+            if (plan.entries.every(e => e.status === 'EXECUTED')) { plan.status = 'ARCHIVED'; }
             await saveData();
             closeChecklistModal();
         });
 
-        // --- Other functions (Cost Basis, Trades Log, Modals) remain largely unchanged ---
-        // ... (full implementation of other functions would go here, ensuring they are complete)
-        // Note: The full, non-abbreviated code would be placed in the final output.
+        // --- UI & TABS ---
+        window.showTab = function(tabId) {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            document.querySelector(`[onclick="showTab('${tabId}')"]`).classList.add('active');
+        };
+        function loadSettingsToUI() {
+            document.getElementById('fee-percent').value = settings.feePercent;
+            document.getElementById('target-r1').value = settings.targetR1;
+            document.getElementById('target-r2').value = settings.targetR2;
+        }
+        document.getElementById('settings-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            settings.feePercent = parseFloat(document.getElementById('fee-percent').value);
+            settings.targetR1 = parseFloat(document.getElementById('target-r1').value);
+            settings.targetR2 = parseFloat(document.getElementById('target-r2').value);
+            await saveData();
+            alert('Settings saved to cloud!');
+        });
+        
+        // --- INITIALIZATION ---
+        document.addEventListener('DOMContentLoaded', () => {
+            showTab('dashboard');
+            addPlanEntryField();
+        });
+        
     </script>
 </body>
 </html>
