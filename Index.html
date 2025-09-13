@@ -178,10 +178,64 @@
                 </div>
             </div>
 
-            <!-- Other Tabs -->
-            <div id="tradesLog" class="tab-content space-y-6"></div>
-            <div id="costBasis" class="tab-content space-y-6"></div>
-            <div id="cash" class="tab-content space-y-6"></div>
+            <!-- TradesLog Tab -->
+            <div id="tradesLog" class="tab-content space-y-6">
+                <div class="bg-gray-800 p-4 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-bold text-white mb-4">Trades Log</h2>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left table-auto text-sm">
+                            <thead><tr><th>Date</th><th>Symbol</th><th>Side</th><th>Entry</th><th>Stop(Eff)</th><th>TP1(Eff)</th><th>Qty</th><th>Risk(THB)</th><th>R:R(TP1)</th><th>Status</th><th>Exit Price</th><th>Actual PnL</th><th>R Multiple</th><th>Actions</th></tr></thead>
+                            <tbody id="trades-log-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CostBasis Tab -->
+            <div id="costBasis" class="tab-content space-y-6">
+                <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+                     <h2 class="text-xl font-bold text-white mb-4">เพิ่มธุรกรรม (Add Transaction)</h2>
+                     <form id="add-cost-basis-form" class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+                        <div><label class="block mb-1 text-sm">Date</label><input type="date" id="cb-date" class="w-full p-2" required></div>
+                        <div><label class="block mb-1 text-sm">Symbol</label><input type="text" id="cb-symbol" placeholder="e.g., BTC" class="w-full p-2 uppercase" required></div>
+                        <div><label class="block mb-1 text-sm">Action</label><select id="cb-action" class="w-full p-2"><option value="BUY">BUY</option><option value="SELL">SELL</option></select></div>
+                        <div><label class="block mb-1 text-sm">Price</label><input type="number" step="any" id="cb-price" class="w-full p-2" required></div>
+                        <div><label class="block mb-1 text-sm">Amount (THB)</label><input type="number" step="any" id="cb-amount" class="w-full p-2" required></div>
+                        <div class="md:col-span-5"><button type="submit" class="w-full btn-primary p-2 rounded font-semibold">Add Transaction</button></div>
+                    </form>
+                </div>
+                <div class="bg-gray-800 p-4 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-bold text-white mb-4">Cost Basis Log</h2>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left table-auto text-sm">
+                            <thead><tr><th>Date</th><th>Symbol</th><th>Action</th><th>Price</th><th>Amount(THB)</th><th>Qty</th><th>Cum Qty</th><th>Cum Cost(THB)</th><th>Avg Cost</th><th>Action</th></tr></thead>
+                            <tbody id="cost-basis-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cash Management Tab -->
+            <div id="cash" class="tab-content space-y-6">
+                <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-bold text-white mb-4">บันทึกเงินสด (Cash Transaction)</h2>
+                    <form id="add-cash-form" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                        <div class="col-span-1"><label for="cash-date" class="block mb-1 text-sm">Date</label><input type="date" id="cash-date" class="w-full p-2" required></div>
+                        <div class="col-span-1"><label for="cash-type" class="block mb-1 text-sm">Type</label><select id="cash-type" class="w-full p-2" required><option value="DEPOSIT">ฝาก (Deposit)</option><option value="WITHDRAWAL">ถอน (Withdrawal)</option></select></div>
+                        <div class="col-span-1"><label for="cash-amount" class="block mb-1 text-sm">Amount (THB)</label><input type="number" step="any" id="cash-amount" placeholder="e.g., 50000" class="w-full p-2" required></div>
+                        <div class="col-span-1"><button type="submit" class="w-full btn-primary p-2 rounded font-semibold">Add Transaction</button></div>
+                    </form>
+                </div>
+                <div class="bg-gray-800 p-4 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-bold text-white mb-4">ประวัติธุรกรรมเงินสด</h2>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left table-auto text-sm">
+                            <thead><tr><th class="p-2">Date</th><th class="p-2">Type</th><th class="p-2">Amount (THB)</th><th class="p-2">Action</th></tr></thead>
+                            <tbody id="cash-log-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
 
              <!-- Settings Tab -->
             <div id="settings" class="tab-content">
@@ -262,7 +316,7 @@
                 userEmailEl.textContent = `Logged in as: ${user.email}`;
                 loadDataForUser(user.uid);
                 if (priceUpdateInterval) clearInterval(priceUpdateInterval);
-                fetchRealTimePrices(true); // Initial fetch with dropdown population
+                fetchRealTimePrices(true);
                 priceUpdateInterval = setInterval(() => fetchRealTimePrices(false), 30000);
             } else {
                 currentUser = null;
@@ -331,6 +385,9 @@
                 }
                 updateSymbolPrice();
                 document.getElementById('last-updated-time').textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
+                if (document.querySelector('.tab-button.active').getAttribute('onclick') === "showTab('dashboard')") {
+                    renderDashboard(calculatePortfolioStats());
+                }
             } catch (error) {
                 console.error("Failed to fetch BitKub prices:", error);
             }
@@ -432,25 +489,55 @@
             if(window.equityChart) window.equityChart.destroy();
             window.equityChart = new Chart(ctxEquity, { type: 'line', data: { datasets: [{ label: 'Portfolio Equity (THB)', data: equityData, borderColor: '#3b82f6', tension: 0.1 }] }, options: { scales: { x: { type: 'time', time: { unit: 'day' }, adapters: { date: { locale: 'en-US' } } } } } });
 
-            const cryptoValues = Object.keys(stats.holdings).map(symbol => {
+            const cryptoValues = Object.keys(stats.holdings).filter(s => stats.holdings[s].cumQty > 0).map(symbol => {
                 const ticker = `THB_${symbol}`;
                 const currentPrice = (bitkubTickers[ticker] && bitkubTickers[ticker].last) ? parseFloat(bitkubTickers[ticker].last) : 0;
                 return stats.holdings[symbol].cumQty * currentPrice;
             });
             const ctxHoldings = document.getElementById('holdings-chart').getContext('2d');
             if(window.holdingsChart) window.holdingsChart.destroy();
-            window.holdingsChart = new Chart(ctxHoldings, { type: 'pie', data: { labels: Object.keys(stats.holdings), datasets: [{ label: 'Crypto Value (THB)', data: cryptoValues, backgroundColor: ['#3b82f6', '#ef4444', '#22c55e', '#f97316', '#a855f7'] }] } });
+            window.holdingsChart = new Chart(ctxHoldings, { type: 'pie', data: { labels: Object.keys(stats.holdings).filter(s => stats.holdings[s].cumQty > 0), datasets: [{ label: 'Crypto Value (THB)', data: cryptoValues, backgroundColor: ['#3b82f6', '#ef4444', '#22c55e', '#f97316', '#a855f7'] }] } });
         }
         
         // --- CASH MANAGEMENT ---
-        function renderCashLog() { /* Unchanged */ }
-        document.getElementById('add-cash-form').addEventListener('submit', async (e) => { /* Unchanged */ });
-        window.deleteCashItem = async (id) => { /* Unchanged */ };
+        function renderCashLog() {
+            const body = document.getElementById('cash-log-body');
+            body.innerHTML = '';
+            [...cashLog].sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(tx => {
+                body.innerHTML += `<tr><td class="p-2">${tx.date}</td><td class="p-2 ${tx.type.toLowerCase()}">${tx.type}</td><td class="p-2">${tx.amount.toFixed(2)}</td><td class="p-2"><button class="text-red-500 hover:text-red-400 text-xs" onclick="deleteCashItem('${tx.id}')">Delete</button></td></tr>`;
+            });
+        }
+        document.getElementById('add-cash-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const newTx = { id: `cash_${new Date().getTime()}`, date: document.getElementById('cash-date').value, type: document.getElementById('cash-type').value, amount: parseFloat(document.getElementById('cash-amount').value) };
+            cashLog.push(newTx);
+            await saveData();
+            e.target.reset();
+        });
+        window.deleteCashItem = async (id) => {
+            if (confirm('Are you sure you want to delete this cash transaction?')) { cashLog = cashLog.filter(tx => tx.id !== id); await saveData(); }
+        };
 
         // --- TRADE PLANNER ---
-        function addPlanEntryField() { /* Unchanged */ }
+        function addPlanEntryField() {
+            const container = document.getElementById('plan-entries-container');
+            const entryDiv = document.createElement('div');
+            entryDiv.className = 'grid grid-cols-1 md:grid-cols-4 gap-3 p-3 bg-gray-700 rounded-lg';
+            entryDiv.innerHTML = `<input type="number" step="any" placeholder="Entry Price" class="plan-entry-price p-2" required><input type="number" step="any" placeholder="Stop Price" class="plan-entry-stop p-2" required><input type="number" step="1" min="1" max="100" placeholder="% of Size (e.g., 30)" class="plan-entry-percent p-2" required><button type="button" class="btn-danger p-2 text-sm" onclick="this.parentElement.remove()">Remove</button>`;
+            container.appendChild(entryDiv);
+        }
         document.getElementById('add-plan-entry-btn').addEventListener('click', addPlanEntryField);
-        document.getElementById('trade-plan-form').addEventListener('submit', async function(e) { /* Unchanged */ });
+        document.getElementById('trade-plan-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const entries = Array.from(document.querySelectorAll('#plan-entries-container > div')).map(el => ({ entryPrice: parseFloat(el.querySelector('.plan-entry-price').value), stopPrice: parseFloat(el.querySelector('.plan-entry-stop').value), percent: parseFloat(el.querySelector('.plan-entry-percent').value), status: 'PLANNED' }));
+            if(entries.reduce((sum, en) => sum + en.percent, 0) > 100) { return alert('Total percentage cannot exceed 100%.'); }
+            const newPlan = { id: `plan_${new Date().getTime()}`, symbol: document.getElementById('plan-symbol').value.toUpperCase(), timeframe: '', strategy: document.getElementById('plan-strategy').value, riskPercent: parseFloat(document.getElementById('plan-risk-percent').value), notes: document.getElementById('plan-notes').value, status: 'ACTIVE', entries };
+            tradePlans.push(newPlan);
+            await saveData();
+            e.target.reset();
+            document.getElementById('plan-entries-container').innerHTML = '';
+            addPlanEntryField();
+        });
         function renderTradePlanner() {
             const container = document.getElementById('active-plans-container');
             container.innerHTML = '';
@@ -464,8 +551,7 @@
                 container.appendChild(planDiv);
             });
         }
-        window.archivePlan = async (planId) => { /* Unchanged */ };
-
+        window.archivePlan = async (planId) => { if (confirm('Are you sure you want to archive this plan?')) { const plan = tradePlans.find(p => p.id === planId); if(plan) {plan.status = 'ARCHIVED'; await saveData();} }};
         window.executePlanEntry = async (planId, entryIndex) => {
             const plan = tradePlans.find(p => p.id === planId);
             if (!plan) return;
@@ -484,15 +570,60 @@
         };
 
         // --- TRADES & COST BASIS LOG ---
-        document.getElementById('add-cost-basis-form').addEventListener('submit', async function(e) { /* Unchanged */ });
-        function renderTradesLog() { /* Unchanged */ }
-        function renderCostBasisLog() { /* Unchanged */ }
-        window.deleteCostItem = async (id) => { /* Unchanged */ };
+        document.getElementById('add-cost-basis-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const newTx = { id: `cb_${new Date().getTime()}`, date: document.getElementById('cb-date').value, symbol: document.getElementById('cb-symbol').value.toUpperCase(), action: document.getElementById('cb-action').value, price: parseFloat(document.getElementById('cb-price').value), amount: parseFloat(document.getElementById('cb-amount').value) };
+            costBasisLog.push(newTx);
+            await saveData();
+            e.target.reset();
+        });
+        function renderTradesLog() {
+             const body = document.getElementById('trades-log-body');
+            body.innerHTML = '';
+            [...tradesLog].sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(t => {
+                body.innerHTML += `<tr><td class="p-2">${t.date}</td><td class="p-2">${t.symbol}</td><td class="p-2 ${t.side.toLowerCase()}">${t.side}</td><td class="p-2">${t.entryPrice.toFixed(4)}</td><td class="p-2">${t.stopEff.toFixed(4)}</td><td class="p-2">${t.tp1Eff.toFixed(4)}</td><td class="p-2">${t.qty.toFixed(6)}</td><td class="p-2">${(t.riskThb || 0).toFixed(2)}</td><td class="p-2">${(t.rr1 || 0).toFixed(2)}</td><td class="p-2">${t.status}</td><td class="p-2">${t.exitPrice ? t.exitPrice.toFixed(4) : 'N/A'}</td><td class="p-2 ${t.actualPnl > 0 ? 'buy' : t.actualPnl < 0 ? 'sell' : ''}">${t.actualPnl ? t.actualPnl.toFixed(2) : 'N/A'}</td><td class="p-2">${t.rMultiple ? t.rMultiple.toFixed(2) : 'N/A'}</td><td class="p-2">${t.status === 'OPEN' ? `<button class="btn-primary text-xs p-1 rounded" onclick="openModal('${t.id}')">Close</button>`: ''}</td></tr>`;
+            });
+        }
+        function renderCostBasisLog() {
+            const body = document.getElementById('cost-basis-body');
+            body.innerHTML = '';
+            let holdings = {};
+            [...costBasisLog].sort((a,b) => new Date(a.date) - new Date(b.date)).forEach(tx => {
+                if(!holdings[tx.symbol]) holdings[tx.symbol] = { cumQty: 0, cumCost: 0 };
+                const qty = tx.amount / tx.price;
+                if (tx.action === 'BUY') {
+                    const feeAdjustedQty = qty * (1 - (settings.feePercent/100));
+                    holdings[tx.symbol].cumQty += feeAdjustedQty;
+                    holdings[tx.symbol].cumCost += tx.amount;
+                } else {
+                    const avgCost = holdings[tx.symbol].cumQty > 0 ? holdings[tx.symbol].cumCost / holdings[tx.symbol].cumQty : 0;
+                    holdings[tx.symbol].cumQty -= qty;
+                    holdings[tx.symbol].cumCost -= qty * avgCost;
+                }
+                tx.calc = { qty, cumQty: holdings[tx.symbol].cumQty, cumCost: holdings[tx.symbol].cumCost, avgCost: holdings[tx.symbol].cumQty > 0 ? holdings[tx.symbol].cumCost / holdings[tx.symbol].cumQty : 0 };
+            });
+            [...costBasisLog].sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(tx => {
+                body.innerHTML += `<tr><td class="p-2">${tx.date}</td><td class="p-2">${tx.symbol}</td><td class="p-2 ${tx.action.toLowerCase()}">${tx.action}</td><td class="p-2">${tx.price.toFixed(4)}</td><td class="p-2">${tx.amount.toFixed(2)}</td><td class="p-2">${tx.calc.qty.toFixed(6)}</td><td class="p-2">${tx.calc.cumQty.toFixed(6)}</td><td class="p-2">${tx.calc.cumCost.toFixed(2)}</td><td class="p-2">${tx.calc.avgCost.toFixed(4)}</td><td class="p-2"><button class="text-red-500 hover:text-red-400 text-xs" onclick="deleteCostItem('${tx.id}')">Delete</button></td></tr>`;
+            });
+        }
+        window.deleteCostItem = async (id) => { if (confirm('Are you sure you want to delete this transaction?')) { costBasisLog = costBasisLog.filter(tx => tx.id !== id); await saveData(); } };
 
         // --- MODALS ---
-        window.openModal = (tradeId) => { /* Unchanged */ };
-        window.closeModal = () => { /* Unchanged */ };
-        document.getElementById('close-trade-form').addEventListener('submit', async function(e) { /* Unchanged */ });
+        window.openModal = (tradeId) => { document.getElementById('close-trade-id').value = tradeId; document.getElementById('close-trade-modal').classList.remove('hidden'); document.getElementById('exit-date').value = new Date().toISOString().split('T')[0]; };
+        window.closeModal = () => { document.getElementById('close-trade-modal').classList.add('hidden'); document.getElementById('close-trade-form').reset(); };
+        document.getElementById('close-trade-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const tradeId = document.getElementById('close-trade-id').value;
+            const exitPrice = parseFloat(document.getElementById('exit-price').value);
+            const trade = tradesLog.find(t => t.id === tradeId);
+            if (!trade) return;
+            const pnlPerUnit = exitPrice - trade.entryPrice;
+            const finalPnl = (trade.side === 'LONG' ? pnlPerUnit : -pnlPerUnit) * trade.qty;
+            const fee = (trade.positionSize + (exitPrice * trade.qty)) * (settings.feePercent / 100);
+            trade.status = 'CLOSED'; trade.exitPrice = exitPrice; trade.exitDate = document.getElementById('exit-date').value; trade.actualPnl = finalPnl - fee; trade.rMultiple = trade.riskThb > 0 ? trade.actualPnl / trade.riskThb : 0;
+            await saveData();
+            closeModal();
+        });
         
         // --- CHECKLIST LOGIC ---
         document.getElementById('checklist-container').addEventListener('change', () => {
@@ -501,9 +632,25 @@
         });
 
         // --- UI & TABS ---
-        window.showTab = function(tabId) { /* Unchanged */ };
-        function loadSettingsToUI() { /* Unchanged */ }
-        document.getElementById('settings-form').addEventListener('submit', async function(e) { /* Unchanged */ });
+        window.showTab = function(tabId) {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            document.querySelector(`[onclick="showTab('${tabId}')"]`).classList.add('active');
+        };
+        function loadSettingsToUI() {
+            document.getElementById('fee-percent').value = settings.feePercent;
+            document.getElementById('target-r1').value = settings.targetR1;
+            document.getElementById('target-r2').value = settings.targetR2;
+        }
+        document.getElementById('settings-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            settings.feePercent = parseFloat(document.getElementById('fee-percent').value);
+            settings.targetR1 = parseFloat(document.getElementById('target-r1').value);
+            settings.targetR2 = parseFloat(document.getElementById('target-r2').value);
+            await saveData();
+            alert('Settings saved to cloud!');
+        });
         
         // --- INITIALIZATION ---
         document.addEventListener('DOMContentLoaded', () => {
@@ -515,6 +662,4 @@
     </script>
 </body>
 </html>
-
-
 
